@@ -61,9 +61,21 @@ local opts = {
     {"144p" : "bestvideo[height<=?144]+bestaudio/best"}
     ]
     ]],
+
+    --cookies files for youtube-dl, same as youtube-dl --cookies cookies.txt or mpv --ytdl-raw-options=cookies=cookies.txt
+    cookies = "",
 }
 (require 'mp.options').read_options(opts, "youtube-quality")
 opts.quality_strings = utils.parse_json(opts.quality_strings)
+
+--Read command line arguments
+local ytdl_raw_options = mp.get_property("ytdl-raw-options")
+if ytdl_raw_options ~= nil and ytdl_raw_options:find("cookies=") ~= nil then
+    local cookies = ytdl_raw_options:match("cookies=([^,]+)")
+    if cookies ~= nil then
+        opts.cookies = cookies
+    end
+end
 
 local destroyer = nil
 
@@ -202,6 +214,10 @@ function download_formats()
     end
 
     local command = {ytdl.path, "--no-warnings", "--no-playlist", "-j"}
+    if opts.cookies and opts.cookies  ~= "" then
+        table.insert(command, "--cookies")
+        table.insert(command, opts.cookies)
+    end
     table.insert(command, url)
     local es, json, result = exec(command)
 
